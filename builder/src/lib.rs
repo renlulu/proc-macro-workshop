@@ -18,17 +18,20 @@ pub fn derive(input: TokenStream) -> TokenStream {
         unimplemented!()
     };
 
-    let optionized_fields = fields.iter().map(|f|
-        syn::Field {
-            attrs: vec![],
-            vis: syn::Visibility::Inherited,
-            ident: f.ident.clone(),
-            colon_token: f.colon_token.clone(),
-            // todo wrap the origin type with optional
-            ty: f.ty.clone(),
+    let optionized_fields = fields.iter().map(|f| {
+        let name = &f.ident;
+        let ty = &f.ty;
+        quote! {
+            #name: std::option::Option<#ty>
         }
-    );
+    });
 
+    let empty_fields = fields.iter().map(|f| {
+        let name = &f.ident;
+        quote! {
+            #name: None
+        }
+    });
 
     let expanded = quote! {
         pub struct #builder_ident{
@@ -36,12 +39,10 @@ pub fn derive(input: TokenStream) -> TokenStream {
         }
         impl #name {
             pub fn builder() -> #builder_ident{
-                #builder_ident{}
+                #builder_ident{
+                    #(#empty_fields,)*
+                }
             }
-        }
-
-        impl #builder_ident {
-
         }
     };
 
